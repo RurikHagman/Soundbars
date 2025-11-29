@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 public class WaveformPanel extends JPanel {
@@ -12,8 +13,31 @@ public class WaveformPanel extends JPanel {
         setPreferredSize(new Dimension(800, 200));
         setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         JTextArea label = new JTextArea(audioFile.getName());
-        label.setEditable(false);   
+        label.setEditable(false);
+        JButton saveButton = new JButton("Save Image");
+        saveButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Waveform Image");
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                Dimension size = this.getSize();
+                BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2 = image.createGraphics();
+                this.paint(g2);
+                g2.dispose();
+                try {
+                    javax.imageio.ImageIO.write(image, "png", fileToSave);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error saving image: " + ex.getMessage(),
+                            "Save Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });   
         add(label);
+        add(saveButton);
+        
         new Thread(() -> {
                 try {
                     float[] samples = AudioDataLoader.loadMonoPcm(audioFile.getAbsolutePath());
