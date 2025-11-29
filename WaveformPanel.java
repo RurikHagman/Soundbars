@@ -1,15 +1,32 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 public class WaveformPanel extends JPanel {
 
     private float[] bars = new float[0];
 
-    public WaveformPanel() {
+    public WaveformPanel(File audioFile) {
         setBackground(Color.WHITE);
         setForeground(new Color(0x1a73e8)); // pleasant blue for bars
         setPreferredSize(new Dimension(800, 200));
+        setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        JTextArea label = new JTextArea(audioFile.getName());
+        label.setEditable(false);   
+        add(label);
+        new Thread(() -> {
+                try {
+                    float[] samples = AudioDataLoader.loadMonoPcm(audioFile.getAbsolutePath());
+                    float[] bars = WaveformData.createWaveform(samples, 30);
+                    SwingUtilities.invokeLater(() -> this.setBars(bars));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+                            "Error loading audio: " + e.getMessage(), "Load Error", JOptionPane.ERROR_MESSAGE));
+                }
+            }).start();
     }
+
     public void setBars(float[] bars) {
         this.bars = bars;
         repaint();
@@ -45,4 +62,5 @@ public class WaveformPanel extends JPanel {
         }
         g2.dispose();
     }
+    
 }
